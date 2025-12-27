@@ -1,0 +1,99 @@
+---
+title: "Aegrea ennustamine keskmise palga näitel"
+author: "Kullo Raiend"
+date: "2025-09-06"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Kasuta paketti forecast
+# Veendu, et pakett on olemas
+if (!require("forecast")) install.packages("forecast")
+
+# Lae pakett 
+library(forecast)
+library(tidyverse)
+```
+
+## Aegrea ennustamise kohta kirjandus
+
+Aegrea ennustamise (time series forecasting) kohta leiab veebist rohkelt lugemismaterjali, googeldades näiteks "A Complete Guide to Time Series Analysis & Forecasting in R". Alljärgnevas näites on koodi kirjutamisel eeskujuna kasutatud artiklit  [Time Series and Forecasting Using  R](https://www.geeksforgeeks.org/r-language/time-series-and-forecasting-using-r/).
+
+## Ülesanne
+
+Regulaarse intervalliga avaldatava statistilise näitaja väärtused moodustavad aegrea. Aegreale väärtuse lisamisel (järgmisel avaldamisel) saab hinnata, kas aegreale lisatav (avaldatav) väärtus on statistiliselt usaldusväärne või mitte.
+
+Aegreale lisatava väärtuse usaldusväärsuse üle otsustamiseks võrreldakse uut väärtust aegrea seniste andmete põhjal loodud ootuspärase vahemikuga. Kui uus väärtus langeb sellest vahemikust välja, on vaja selgitada potentsiaalse eksimuse või anomaalia sisuline põhjus.
+
+1. Senise aegrea põhjal koostatakse ennustusmudel, mis õpib selgeks aegrea seaduspärasused, nagu trend (kasvav või kahanev joon) ja sesoonsus (korduvad mustrid). Mudeleid on mitut liiki. 
+
+2. Selle mudeliga ennustatakse järgmist väärtust ja arvutatakse selle ennustusintervall (näiteks 95% tõenäosusega vahemik, kuhu järgmine väärtus peaks langema).
+
+3. Otsustamine.  
+   Kui avaldatava näitaja väärtus langeb sellest ennustusintervallist välja, loetakse see anomaaliaks. Näitaja väärtustes statistiliselt olulise kõrvalekalde toimumiseks peaks olema toimunud Eesti elus mingi oluline muutus (näiteks haridustöötajate palkadeks eraldati kvartali jooksul 25% suurem summa ja hariduses keskmine palk tõusis umbes 25%). Reaalses elus oluliste muutuste puudumisel tuleks liigitada avaldatava näitaja anomaalne väärtus eksimuseks ja selgitada väärtuse arvutamisel juhtunud eksimuse võimalik põhjus.
+
+## Statistilise näitaja usaldusväärsuse kontrollimise näide
+
+Näitena kasutame Tartu maakonna keskmist kuupalka (Andmekuup PA117: KESKMINE BRUTOKUUPALK) alates 2021 I kvartal kuni 2025 II kvartal. Oletame, et on vaja hinnata Tartu maakonna 2025 II kvartali keskmise brutokuupalga 2175 eurot usaldusväärsust.
+
+```{r values}
+
+# Tartu maakonna keskmine palk alates 2021 I kv kuni 2025 II kv
+c <- c(1394, 1498, 1441, 1561, 1516, 1680, 1614, 1750, 1730, 1889, 1790, 1941, 1888, 2039, 1962, 2092, 2023, 2175) 
+```
+
+Moodustame näitaja seniste väärtuste aegrea.
+
+```{r data}
+# Aegrida, kvartalid alates 2021 I kv
+# Jäta viimane kvartal teadaolevast aegreast välja. Viimast kvartalit hindame.
+data <- ts(head(c, n = length(c) - 1), frequency = 4, start = c(2021, 1))
+```
+
+Moodusta aegrea ennustusmudel. 
+
+```{r model}
+# Use the ARIMA model to forecast salary data for the next quarter
+model <- auto.arima(data)
+```
+
+Selle mudeliga ennusta järgmine (2025 II kv) palga väärtus ja arvuta selle ennustusintervall 95% tõenäosusega.
+
+```{r forecast}
+# From the model forecast the salary data for the next 1 quarter
+forecast_result <- forecast(model, level = c(95), h = 1)
+```
+
+Otsusta viimase kvartali palga väärtuse usaldusväärtus.
+
+```{r range}
+# tõenäosusega 95% ennustatud keskmise palga vahemik täisarvuna
+bounds <- round(c(as.double(forecast_result[["lower"]]), as.double(forecast_result[["upper"]])), digits = 0)
+
+# Aegrea viimane, kontrollitav väärtus
+c_last <- c[length(c)]
+
+# Kas aegrea viimane väärtus on ennustatud vahemikus 
+is_reliable <- between(c_last, bounds[1], bounds[2])
+
+# Keskmise palga viimase kvartali ennustatav keskmine palk
+c_last_forecast_mean <- round(c(as.double(forecast_result[["mean"]])), digits = 0)
+
+# Keskmise palga ja hinnangu keskväärtuse erinevus
+mean_diff_abs <- round(c_last - c_last_forecast_mean, digits = 0)
+
+# Keskmise palga ja hinnangu keskväärtuse erinevus hinnangu keskväärtuse suhtes protsentides
+mean_diff_rel <- round(((c_last - c_last_forecast_mean) / c_last_forecast_mean) * 100, digits = 1)
+```
+
+Senisest aegreast ennustatud viimase kvartali keskmise palga vahemik tõenäosusega 95% on (`r bounds`). Aegrea viimane, kontrollitav väärtus `r c_last` asub ennustatud vahemikus, usaldusväärsus = `r is_reliable`.
+
+Avaldatud keskmine palk `r c_last` ja mudelist ennustatud viimase kvartali palga keskväärtus `r c_last_forecast_mean` erinevad `r mean_diff_abs` euro võrra. Avaldatud keskmise palga ja ennustatud palga keskväärtuse suhteline erinevus hinnangu keskväärtuse suhtes on `r mean_diff_rel` protsenti. 
+
+Tartu maakonna 2025 II kvartali keskmise kuupalga `r c_last` eurot võib lugeda statistiliselt usaldusväärseks ehk ootuspäraseks.
+
+Oletame, et arvutustest tuleb Tartu maakonna 2025 II kvartali keskmise kuupalga väärtusteks `r c_last <- 2614; c_last` eurot (27. augustil avaldatud näitaja väärtus). 
+
+Kontrollitav väärtus `r c_last` asub tõenäosusega 95% ennustatud vahemikust (`r bounds`) väljaspool. Kontrollitav väärtus on ennustatud palga keskväärtusest `r round(((c_last - c_last_forecast_mean) / c_last_forecast_mean) * 100, digits = 1)` protsenti suurem. Ei ole kuulda olnud Tartumaa ettevõtete eriliselt suurest majanduslikust edust, mis võiks põhjustada Tartumaal palga tõusu olulise kiirenemise. Tekkinud on põhjendatud kahtlus, et arvutatud näitaja väärtus `r c_last` on eksimus.
