@@ -1,0 +1,10 @@
+.httr-oauth
+.Rproj.user
+.Rhistory
+.RData
+.DS_Store
+.quarto
+*.xlsx
+*.log
+*.png
+*.csv
