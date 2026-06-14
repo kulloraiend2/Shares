@@ -56,6 +56,9 @@ share_insert <- "INSERT INTO share (symbol, company) VALUES
 share_insert <- "INSERT INTO share (symbol, company) VALUES
 ('INF1T', 'Infortar AS')"
 
+share_insert <- "INSERT INTO share (symbol, company) VALUES
+('LVN1T', 'Liven AS')"
+
 #insertRec <- dbGetQuery(con, share_insert)
 
 # update company
@@ -219,7 +222,7 @@ saveStatementInDB <- function(statements, shareId, statementDate) {
   } # end deleteStatementInDB()
   
   # Delete all statements in one day
-  # (deleteStatementInDB(as.Date("2025-08-22")))
+  # (deleteStatementInDB(as.Date("2026-02-26")))
   
   # delete all statement records for share_id where date=statementDate to allow repeated insert for the same date
   deleteStatementInDB(statementDate, shareId = shareId)

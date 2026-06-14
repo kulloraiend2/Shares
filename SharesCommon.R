@@ -15,6 +15,7 @@ shareSymbols <- c(
                   "HPR1T",
                   "INF1T",
                   "LHV1T",
+                  "LVN1T",
                   "MRK1T",
                   "NCN1T",
                   "PRF1T",
@@ -26,5 +27,5 @@ shareSymbols <- c(
 )
 # shareSymbols <- c("LHV1T", "NCN1T", "PRF1T", "SFG1T")
 shareSymbols <- c(
-  "ARC1T", "EFT1T", "HPR1T", "INF1T", "LHV1T", "MRK1T", "NCN1T", "PRF1T", "SFG1T", "TSM1T"
+  "ARC1T", "EFT1T", "HPR1T", "INF1T", "LHV1T", "LVN1T", "MRK1T", "NCN1T", "PRF1T", "SFG1T", "TSM1T"
 )
