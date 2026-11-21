@@ -1,4 +1,6 @@
+if (!require("RMySQL", quietly = TRUE)) install.packages("RMySQL")
 library(RMySQL)
+if (!require("tidyverse", quietly = TRUE)) install.packages("tidyverse")
 library(tidyverse)
 library(dbplyr)
 library(lubridate)
@@ -222,7 +224,7 @@ saveStatementInDB <- function(statements, shareId, statementDate) {
   } # end deleteStatementInDB()
   
   # Delete all statements in one day
-  # (deleteStatementInDB(as.Date("2026-02-26")))
+  # (deleteStatementInDB(as.Date("2026-06-26")))
   
   # delete all statement records for share_id where date=statementDate to allow repeated insert for the same date
   deleteStatementInDB(statementDate, shareId = shareId)
@@ -345,7 +347,13 @@ processSpreadsheet <- function(shareSymbol) {
   }
   
   # Assign value by first share 
-  if (is.na(commonStatementDate)) commonStatementDate <<- statementDate
+  if (is.na(commonStatementDate)) {
+    
+    commonStatementDate <<- statementDate
+    
+    cat("commonStatementDate =", as.character(commonStatementDate), "\n")
+    
+  }
   
   # Merge rows split by mistake
   for (j in seq_len(nrow(statements) - 1)) {
